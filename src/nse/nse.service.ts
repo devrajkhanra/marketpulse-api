@@ -1,11 +1,14 @@
-import { Injectable } from '@nestjs/common';
+// src/nse/nse.service.ts
+import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import * as os from 'os';
+import { saveLastDate } from './utils/date-store';
 
 @Injectable()
 export class NseService {
+    private readonly logger = new Logger(NseService.name);
     private desktopPath = path.join(os.homedir(), 'Desktop', 'NSE-Data');
     private folders = ['stocks', 'indices', 'ma', 'broad'];
 
@@ -32,33 +35,62 @@ export class NseService {
 
     private async download(url: string, folder: string, filename: string): Promise<string> {
         const filePath = path.join(this.desktopPath, folder, filename);
-        const response = await axios.get(url, { responseType: 'stream' });
-
-        return new Promise((resolve, reject) => {
-            const writer = fs.createWriteStream(filePath);
-            (response.data as NodeJS.ReadableStream).pipe(writer);
-            writer.on('finish', () => resolve(filePath));
-            writer.on('error', reject);
-        });
+        try {
+            const response = await axios.get(url, { responseType: 'stream' });
+            return new Promise((resolve, reject) => {
+                const writer = fs.createWriteStream(filePath);
+                (response.data as NodeJS.ReadableStream).pipe(writer);
+                writer.on('finish', () => resolve(filePath));
+                writer.on('error', reject);
+            });
+        } catch (error) {
+            // Type-safe check for AxiosError
+            if (error instanceof AxiosError && error.response?.status === 404) {
+                this.logger.warn(`File not found for URL: ${url}`);
+            } else {
+                this.logger.error(`Error downloading ${url}: ${(error as Error).message}`);
+            }
+            throw error; // Rethrow to handle in caller
+        }
     }
-
 
     async downloadAllCSVs(dates: string[]): Promise<string[]> {
         this.ensureFolders();
         const saved: string[] = [];
+        let latestSuccessfulDate: string | null = null;
 
-        for (const date of dates) {
-            const files = await Promise.all([
-                this.download(this.urls.stocks(date), 'stocks', `${date}.csv`),
-                this.download(this.urls.indices(date), 'indices', `${date}.csv`),
-                this.download(this.urls.ma(date), 'ma', `${date}.csv`),
-            ]);
-            saved.push(...files);
+        // Sort dates ascending to determine the latest successful one (assuming ddmmyyyy format sortable as string)
+        const sortedDates = [...dates].sort();
+
+        for (const date of sortedDates) {
+            try {
+                // Attempt to download all three date-specific files
+                // If any fails (e.g., 404 on holiday), the whole date is skipped
+                const files = await Promise.all([
+                    this.download(this.urls.stocks(date), 'stocks', `${date}.csv`),
+                    this.download(this.urls.indices(date), 'indices', `${date}.csv`),
+                    this.download(this.urls.ma(date), 'ma', `${date}.csv`),
+                ]);
+                saved.push(...files);
+                latestSuccessfulDate = date; // Update latest on success
+            } catch (error) {
+                this.logger.log(`Skipping date ${date} due to unavailable data (likely holiday or invalid date).`);
+                // Continue to next date without adding to saved
+            }
         }
 
-        // Download broad once
-        const broadPath = await this.download(this.urls.broad(), 'broad', `nifty50list.csv`);
-        saved.push(broadPath);
+        // Download broad once, outside the loop (it's date-independent)
+        try {
+            const broadPath = await this.download(this.urls.broad(), 'broad', `nifty50list.csv`);
+            saved.push(broadPath);
+        } catch (error) {
+            this.logger.error(`Failed to download broad market list: ${(error as Error).message}`);
+        }
+
+        // Save the latest successful date if any were processed successfully
+        if (latestSuccessfulDate) {
+            saveLastDate(latestSuccessfulDate);
+        }
 
         return saved;
     }
