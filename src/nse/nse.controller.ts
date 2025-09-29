@@ -9,7 +9,7 @@ export class NseController {
     constructor(private readonly nseService: NseService) { }
 
     @Post('download')
-    @UsePipes(new ValidationPipe({ transform: true }))
+    // @UsePipes(new ValidationPipe({ transform: true }))
     async downloadCSVs(@Body() body: DateArrayDto): Promise<string[]> {
         return this.nseService.downloadAllCSVs(body.dates);
     }

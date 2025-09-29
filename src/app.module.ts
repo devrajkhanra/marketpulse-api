@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { DateModule } from './date/date.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NseModule } from './nse/nse.module';
+import { PerformanceModule } from './performance/performance.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { NseModule } from './nse/nse.module';
       synchronize: true, // use false in production
     }),
     DateModule,
-    NseModule],
+    NseModule,
+    PerformanceModule],
   controllers: [AppController],
   providers: [AppService],
 })
