@@ -1,98 +1,287 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+MarketPulse: NSE Data Fetcher and Analyzer
+Overview
+MarketPulse is a NestJS-based backend application designed to fetch, store, and analyze data from the National Stock Exchange of India (NSE). It automates the downloading of daily CSV files containing stock bhavdata, indices closing data, market activity reports, and the Nifty 50 stock list. The application processes this data to provide insights such as top gainers and losers from the Nifty 50 index and volume ratio differences between trading days.
+The application uses file-based storage for downloaded CSVs (saved to a desktop folder) and includes a PostgreSQL database integration via TypeORM, although the current implementation primarily relies on file operations rather than database storage. This could be extended in the future for persistent data management.
+Key features include:
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Downloading historical NSE data for specified dates.
+Retrieving the last successfully downloaded date.
+Extracting top 5 gainers and losers from market activity reports.
+Calculating volume ratios for Nifty 50 stocks between two dates.
+Simple date utilities for current date and details.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+This project is ideal for developers, traders, or analysts interested in NSE data automation and basic stock market analytics.
+Table of Contents
 
-## Description
+Overview
+Features
+Architecture
+Prerequisites
+Installation
+Configuration
+Running the Application
+API Endpoints
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Date Module
+NSE Module
+Performance Module
+Volume Module
 
-## Project setup
+Data Storage and Management
+Error Handling and Logging
+Dependencies
+Testing
+Contributing
+License
+Troubleshooting
+Future Enhancements
 
-```bash
-$ npm install
-```
+Features
 
-## Compile and run the project
+Data Downloading: Fetch CSV files from NSE archives for stocks, indices, market activity (MA), and Nifty 50 list. Supports multiple dates in ddmmyyyy format. Skips invalid dates (e.g., holidays) gracefully.
+Date Management: Stores and retrieves the last successfully downloaded date using a local JSON file.
+Performance Analysis: Parses market activity CSVs to extract top 5 Nifty 50 gainers and losers, including their percentage changes.
+Volume Analysis: Calculates the ratio of trading volumes for Nifty 50 stocks between two specified dates.
+Date Utilities: Provides endpoints for current date and detailed date information (including day of week).
+CORS Enabled: Allows cross-origin requests for easy integration with frontend applications.
+Validation: Uses class-validator for input validation on date arrays (ddmmyyyy format).
+Logging: Utilizes NestJS Logger for tracking operations, warnings, and errors.
+File System Integration: Creates directories on the user's desktop for organized storage of downloaded CSVs.
 
-```bash
-# development
-$ npm run start
+Architecture
+The application is structured as a modular NestJS project:
 
-# watch mode
-$ npm run start:dev
+Modules:
 
-# production mode
-$ npm run start:prod
-```
+AppModule: Root module importing all others, including TypeORM for PostgreSQL.
+DateModule: Handles date-related utilities.
+NseModule: Manages downloading NSE CSVs.
+PerformanceModule: Analyzes market activity for gainers/losers.
+VolumeModule: Computes volume ratios.
 
-## Run tests
+Services:
 
-```bash
-# unit tests
-$ npm run test
+AppService: Basic hello world service.
+DateService: Provides current date and details.
+NseService: Downloads CSVs, ensures folder structure, handles errors (e.g., 404 for missing files).
+PerformanceService: Parses MA CSVs to find top gainers/losers.
+VolumeService: Parses stock CSVs and Nifty list to calculate volume ratios.
 
-# e2e tests
-$ npm run test:e2e
+Controllers:
 
-# test coverage
-$ npm run test:cov
-```
+AppController: Root endpoint for hello world.
+DateController: Endpoints for date info.
+NseController: Endpoints for downloading data and getting last date.
+PerformanceController: Endpoint for gainers/losers.
+VolumeController: Endpoint for volume differences.
 
-## Deployment
+DTOs:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+DateDto: For date details (date, dayOfWeek).
+DateArrayDto: For validating arrays of dates in ddmmyyyy format.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Utilities:
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+date-store.ts: Simple JSON-based storage for last successful date.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Database: Configured for PostgreSQL but not actively used in current logic. Entities are auto-loaded but none are defined in provided files.
 
-## Resources
+Data flow:
 
-Check out a few resources that may come in handy when working with NestJS:
+User requests downloads via /nse/download with dates.
+Service fetches URLs, saves to desktop folders, updates last date.
+Analysis endpoints read from saved files.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Prerequisites
 
-## Support
+Node.js (v14+ recommended)
+npm or yarn
+PostgreSQL database (running on localhost:5432 with user 'postgres', password 'root', database 'marketpulse')
+Internet access for downloading NSE data
+Operating system with desktop folder access (tested on macOS/Linux/Windows via os.homedir())
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Note: The database is configured but not utilized; you can disable TypeORM if not needed.
+Installation
 
-## Stay in touch
+Clone the repository:
+git clone <repository-url>
+cd marketpulse
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Install dependencies:
+npm install
 
-## License
+or
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+yarn install
+
+Set up the PostgreSQL database:
+
+Create a database named marketpulse.
+Ensure user postgres with password root has access.
+(Optional) If using entities, run migrations; currently, none exist.
+
+(Optional) Update database credentials in app.module.ts for production.
+
+Configuration
+
+Environment Variables:
+
+PORT: Server port (defaults to 3000).
+
+File Paths:
+
+Downloads saved to ~/Desktop/NSE-Data/ with subfolders: stocks, indices, ma, broad.
+Last date stored in src/nse/utils/last-success.json.
+
+NSE URLs (hardcoded in nse.service.ts):
+
+Stocks: https://archives.nseindia.com/products/content/sec_bhavdata_full_${date}.csv
+Indices: https://archives.nseindia.com/content/indices/ind_close_all_${date}.csv
+MA: https://archives.nseindia.com/archives/equities/mkt/MA${shortDate}.csv (shortDate = ddmmyy)
+Broad: https://archives.nseindia.com/content/indices/ind_nifty50list.csv
+
+Warning: NSE URLs may change; monitor for updates.
+
+Production Notes:
+
+Set synchronize: false in TypeORM config.
+Use environment variables for DB creds.
+Consider cloud storage instead of desktop for files.
+
+Running the Application
+
+Start the server:
+npm run start
+
+or for development with hot-reload:
+npm run start:dev
+
+The app listens on http://localhost:3000 (or custom PORT).
+Test the root endpoint:
+curl http://localhost:3000/
+
+Response: "Hello World!"
+
+API Endpoints
+All endpoints are under http://localhost:3000/. Use tools like Postman or curl for testing.
+Date Module
+
+GET /date
+
+Description: Get the current date in YYYY-MM-DD format.
+Response: string (e.g., "2025-09-29")
+
+GET /date/details
+
+Description: Get current date details.
+Response: JSON { date: "YYYY-MM-DD", dayOfWeek: "Monday" }
+
+NSE Module
+
+POST /nse/download
+
+Description: Download CSVs for specified dates (ddmmyyyy). Skips unavailable dates. Also downloads Nifty 50 list once.
+Body: JSON { "dates": ["ddmmyyyy", "ddmmyyyy"] } (array of strings, validated for 8-digit format)
+Response: Array of saved file paths (e.g., ["/Users/user/Desktop/NSE-Data/stocks/29092025.csv", ...])
+Notes: Creates folders if needed. Updates last successful date.
+
+GET /nse/last-date
+
+Description: Get the last successfully downloaded date (ddmmyyyy).
+Response: string or null
+
+Performance Module
+
+GET /performance/top-gainers-losers
+
+Description: Get top 5 Nifty 50 gainers and losers.
+Query Params: date (optional, ddmmyyyy; defaults to latest available file)
+Response: JSON { topGainers: [{ symbol: "ABC", percentage: 5.2 }, ...], topLosers: [...] }
+Notes: Parses the latest (or specified) MA CSV. Throws 404 if file not found.
+
+Volume Module
+
+POST /volume/differences
+
+Description: Calculate volume ratios for Nifty 50 stocks between two dates.
+Body: JSON { "dates": ["prev_ddmmyyyy", "latest_ddmmyyyy"] }
+Response: Array of { symbol: "ABC", difference: "1.50" } (sorted by symbol)
+Notes: Requires exactly two dates. Uses stock CSVs and Nifty list. Throws error if files missing.
+
+Data Storage and Management
+
+Folders Created:
+
+~/Desktop/NSE-Data/stocks/: Daily stock bhavdata CSVs.
+~/Desktop/NSE-Data/indices/: Daily indices closing CSVs.
+~/Desktop/NSE-Data/ma/: Daily market activity CSVs.
+~/Desktop/NSE-Data/broad/: Nifty 50 list CSV (static).
+
+File Naming: ${date}.csv for date-specific files; nifty50list.csv for broad.
+Parsing Logic:
+
+Performance: Scans MA CSV for "Top Five Nifty 50 Gainers/Losers" sections, extracts symbol and % change.
+Volume: Parses stock CSVs for EQ series TTL_SHARES, filters to Nifty 50, computes latest/prev ratio.
+
+Date Format: All dates in ddmmyyyy (e.g., 29092025). Internal parsing converts to Date objects.
+
+Error Handling and Logging
+
+Common Errors:
+
+404 from NSE: Logged as warning, date skipped.
+File not found: Throws NotFoundException or Error.
+Invalid input: ValidationPipe enforces date format.
+
+Logging: Uses NestJS Logger in services for info, warnings, errors.
+
+Dependencies
+
+@nestjs/common, @nestjs/core, @nestjs/typeorm
+typeorm, pg (for PostgreSQL)
+axios (for HTTP downloads)
+class-validator, class-transformer (for DTO validation)
+fs, path, os (Node.js built-ins)
+Dev: @nestjs/cli, typescript, etc.
+
+Full list in package.json.
+Testing
+
+Unit tests: Add with Jest (configured in NestJS).
+E2E tests: Use Supertest for API endpoints.
+Manual: Download data, then query analysis endpoints.
+
+Example test flow:
+
+POST /nse/download with dates.
+GET /performance/top-gainers-losers.
+POST /volume/differences with two dates.
+
+Contributing
+
+Fork the repo.
+Create feature branches.
+Submit PRs with clear descriptions.
+Follow code style (Prettier/ESLint if configured).
+
+License
+MIT License. See LICENSE file (add one if missing).
+Troubleshooting
+
+Folder Creation Issues: Ensure write permissions on desktop.
+DB Connection Fail: Check Postgres running, creds match.
+Download Fails: Verify internet; NSE may block IPs or change URLs.
+Date Format Errors: Use exactly ddmmyyyy; validation will catch.
+No Data Files: Run downloads first before analysis.
+Axios Errors: Handle network issues in code.
+
+Future Enhancements
+
+Integrate database: Store parsed data in entities for querying.
+Scheduler: Auto-download daily via cron.
+More Analytics: Add charts, trends, or ML predictions.
+Authentication: Secure endpoints.
+Frontend: Build a UI for visualization.
+Error Notifications: Email/Slack on failures.
+Broader Indices: Support beyond Nifty 50.
+Cloud Deployment: AWS/GCP for scalability.

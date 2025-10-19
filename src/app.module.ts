@@ -5,6 +5,7 @@ import { DateModule } from './date/date.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NseModule } from './nse/nse.module';
 import { PerformanceModule } from './performance/performance.module';
+import { VolumeModule } from './volume/volume.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { PerformanceModule } from './performance/performance.module';
     }),
     DateModule,
     NseModule,
-    PerformanceModule],
+    PerformanceModule,
+    VolumeModule],
   controllers: [AppController],
   providers: [AppService],
 })
