@@ -1,287 +1,147 @@
-MarketPulse: NSE Data Fetcher and Analyzer
-Overview
-MarketPulse is a NestJS-based backend application designed to fetch, store, and analyze data from the National Stock Exchange of India (NSE). It automates the downloading of daily CSV files containing stock bhavdata, indices closing data, market activity reports, and the Nifty 50 stock list. The application processes this data to provide insights such as top gainers and losers from the Nifty 50 index and volume ratio differences between trading days.
-The application uses file-based storage for downloaded CSVs (saved to a desktop folder) and includes a PostgreSQL database integration via TypeORM, although the current implementation primarily relies on file operations rather than database storage. This could be extended in the future for persistent data management.
-Key features include:
 
-Downloading historical NSE data for specified dates.
-Retrieving the last successfully downloaded date.
-Extracting top 5 gainers and losers from market activity reports.
-Calculating volume ratios for Nifty 50 stocks between two dates.
-Simple date utilities for current date and details.
+# MarketPulse: NSE Data Fetcher and Analyzer
 
-This project is ideal for developers, traders, or analysts interested in NSE data automation and basic stock market analytics.
-Table of Contents
+## Overview
 
-Overview
-Features
-Architecture
-Prerequisites
-Installation
-Configuration
-Running the Application
-API Endpoints
+MarketPulse is a robust backend application built with NestJS, designed to fetch, store, and analyze daily data from the National Stock Exchange of India (NSE). It automates the process of downloading daily CSV files, including stock bhavdata, indices closing data, and market activity reports. The application processes this data to provide valuable insights, such as identifying the top-performing sectors, top Nifty 50 gainers and losers, and volume analysis for both individual stocks and entire market sectors.
 
-Date Module
-NSE Module
-Performance Module
-Volume Module
+The application is structured to be modular and scalable, with dedicated modules for handling date utilities, NSE data fetching, stock-specific analysis, and sector-specific metrics. It uses a file-based storage system, organizing downloaded data into a structured directory on the user's desktop. This makes it an ideal tool for developers, traders, and financial analysts who require automated access to NSE data and insightful market analytics.
 
-Data Storage and Management
-Error Handling and Logging
-Dependencies
-Testing
-Contributing
-License
-Troubleshooting
-Future Enhancements
+## Key Features
 
-Features
+- **Automated Data Downloading**: Fetches daily CSV files from the NSE archives for stocks, indices, and market activity.
+- **Sector Performance Analysis**: Identifies the top 5 gaining and losing market sectors for a given day based on percentage change.
+- **Sector Volume Analysis**: Calculates the volume ratio for market sectors between two dates, highlighting the top 5 with the highest and lowest ratios. This analysis filters out sectors with insignificant trading volume to provide more meaningful data.
+- **Nifty 50 Stock Performance**: Extracts the top 5 gainers and losers from the Nifty 50 index based on daily market reports.
+- **Nifty 50 Stock Volume Analysis**: Calculates volume differences for individual Nifty 50 stocks between two dates.
+- **Date Management**: Keeps track of the last successfully downloaded date to ensure data consistency.
+- **CORS Enabled**: Allows cross-origin requests for easy integration with frontend applications.
+- **Modular Architecture**: A clean, modular structure that separates concerns, making the application easy to maintain and extend.
 
-Data Downloading: Fetch CSV files from NSE archives for stocks, indices, market activity (MA), and Nifty 50 list. Supports multiple dates in ddmmyyyy format. Skips invalid dates (e.g., holidays) gracefully.
-Date Management: Stores and retrieves the last successfully downloaded date using a local JSON file.
-Performance Analysis: Parses market activity CSVs to extract top 5 Nifty 50 gainers and losers, including their percentage changes.
-Volume Analysis: Calculates the ratio of trading volumes for Nifty 50 stocks between two specified dates.
-Date Utilities: Provides endpoints for current date and detailed date information (including day of week).
-CORS Enabled: Allows cross-origin requests for easy integration with frontend applications.
-Validation: Uses class-validator for input validation on date arrays (ddmmyyyy format).
-Logging: Utilizes NestJS Logger for tracking operations, warnings, and errors.
-File System Integration: Creates directories on the user's desktop for organized storage of downloaded CSVs.
+## Tech Stack
 
-Architecture
-The application is structured as a modular NestJS project:
+- **Framework**: NestJS
+- **Programming Language**: TypeScript
+- **HTTP Client**: Axios (for fetching data from NSE)
+- **Data Parsing**: csv-parser
+- **Validation**: class-validator, class-transformer
 
-Modules:
+## System Architecture
 
-AppModule: Root module importing all others, including TypeORM for PostgreSQL.
-DateModule: Handles date-related utilities.
-NseModule: Manages downloading NSE CSVs.
-PerformanceModule: Analyzes market activity for gainers/losers.
-VolumeModule: Computes volume ratios.
+The application follows a modular architecture, with each module responsible for a specific set of functionalities:
 
-Services:
+- **AppModule**: The root module that integrates all other modules.
+- **DateModule**: Provides utility functions for handling dates.
+- **NseModule**: Manages the downloading of CSV files from the NSE.
+- **SectorsModule**: Responsible for all sector-specific analysis, including performance and volume ratios.
+- **StocksModule**: Handles all stock-specific analysis, including performance and volume for Nifty 50 stocks.
 
-AppService: Basic hello world service.
-DateService: Provides current date and details.
-NseService: Downloads CSVs, ensures folder structure, handles errors (e.g., 404 for missing files).
-PerformanceService: Parses MA CSVs to find top gainers/losers.
-VolumeService: Parses stock CSVs and Nifty list to calculate volume ratios.
+## Prerequisites
 
-Controllers:
+- Node.js (v16+ recommended)
+- npm or yarn
+- Internet access to download data from the NSE website.
 
-AppController: Root endpoint for hello world.
-DateController: Endpoints for date info.
-NseController: Endpoints for downloading data and getting last date.
-PerformanceController: Endpoint for gainers/losers.
-VolumeController: Endpoint for volume differences.
+## Installation and Setup
 
-DTOs:
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd marketpulse
+   ```
 
-DateDto: For date details (date, dayOfWeek).
-DateArrayDto: For validating arrays of dates in ddmmyyyy format.
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-Utilities:
+3. **Run the application**:
+   ```bash
+   npm run start:dev
+   ```
+   The application will be available at `http://localhost:3000`.
 
-date-store.ts: Simple JSON-based storage for last successful date.
+## API Endpoints
 
-Database: Configured for PostgreSQL but not actively used in current logic. Entities are auto-loaded but none are defined in provided files.
+### Date Module
 
-Data flow:
+- **GET /date**
+  - **Description**: Retrieves the current date in `YYYY-MM-DD` format.
+  - **Response**: A string representing the current date.
 
-User requests downloads via /nse/download with dates.
-Service fetches URLs, saves to desktop folders, updates last date.
-Analysis endpoints read from saved files.
+### NSE Module
 
-Prerequisites
+- **POST /nse/download**
+  - **Description**: Downloads daily reports from the NSE for the provided dates.
+  - **Body**: `{ "dates": ["ddmmyyyy", ...] }`
+  - **Response**: An array of file paths for the downloaded reports.
 
-Node.js (v14+ recommended)
-npm or yarn
-PostgreSQL database (running on localhost:5432 with user 'postgres', password 'root', database 'marketpulse')
-Internet access for downloading NSE data
-Operating system with desktop folder access (tested on macOS/Linux/Windows via os.homedir())
+### Sectors Module
 
-Note: The database is configured but not utilized; you can disable TypeORM if not needed.
-Installation
+- **GET /sectors/performance/:date**
+  - **Description**: Retrieves the top 5 gaining and losing market sectors for a given date.
+  - **URL Params**: `date` (in `ddmmyyyy` format).
+  - **Response**: `GetSectorPerformanceResponseDto`
 
-Clone the repository:
-git clone <repository-url>
-cd marketpulse
+- **GET /sectors/volume-ratio/:currentDate/:previousDate**
+  - **Description**: Calculates the volume ratio for all major market sectors and returns the top 5 with the highest and lowest ratios. The calculation filters out sectors with insignificant trading volume and rounds the ratio to two decimal places.
+  - **URL Params**: `currentDate`, `previousDate` (in `ddmmyyyy` format).
+  - **Response**: `GetSectorVolumeRatioResponseDto`
 
-Install dependencies:
-npm install
+### Stocks Module
 
-or
+- **GET /performance/top-gainers-losers**
+  - **Description**: Retrieves the top 5 Nifty 50 gainers and losers for a specific date.
+  - **Query Params**: `date` (optional, in `ddmmyyyy` format). Defaults to the latest available data.
+  - **Response**: A JSON object with `topGainers` and `topLosers` arrays.
 
-yarn install
+- **POST /volume/differences**
+  - **Description**: Calculates the volume differences for individual Nifty 50 stocks between two dates.
+  - **Body**: `{ "dates": ["previous_date", "current_date"] }` (in `ddmmyyyy` format).
+  - **Response**: An array of objects containing the stock symbol and the calculated volume difference.
 
-Set up the PostgreSQL database:
+## Data Storage
 
-Create a database named marketpulse.
-Ensure user postgres with password root has access.
-(Optional) If using entities, run migrations; currently, none exist.
+- **File-Based Storage**: The application stores downloaded CSV files on the user's desktop in a structured folder format:
+  - `~/Desktop/NSE-Data/indices/`: For index data.
+  - `~/Desktop/NSE-Data/ma/`: For market activity reports.
+  - `~/Desktop/NSE-Data/stocks/`: For stock bhavdata.
 
-(Optional) Update database credentials in app.module.ts for production.
+- **Date Tracking**: The last successfully downloaded date is stored in a JSON file to maintain data consistency.
 
-Configuration
+## Running the Application
 
-Environment Variables:
+To run the application in development mode with hot-reloading:
 
-PORT: Server port (defaults to 3000).
-
-File Paths:
-
-Downloads saved to ~/Desktop/NSE-Data/ with subfolders: stocks, indices, ma, broad.
-Last date stored in src/nse/utils/last-success.json.
-
-NSE URLs (hardcoded in nse.service.ts):
-
-Stocks: https://archives.nseindia.com/products/content/sec_bhavdata_full_${date}.csv
-Indices: https://archives.nseindia.com/content/indices/ind_close_all_${date}.csv
-MA: https://archives.nseindia.com/archives/equities/mkt/MA${shortDate}.csv (shortDate = ddmmyy)
-Broad: https://archives.nseindia.com/content/indices/ind_nifty50list.csv
-
-Warning: NSE URLs may change; monitor for updates.
-
-Production Notes:
-
-Set synchronize: false in TypeORM config.
-Use environment variables for DB creds.
-Consider cloud storage instead of desktop for files.
-
-Running the Application
-
-Start the server:
-npm run start
-
-or for development with hot-reload:
+```bash
 npm run start:dev
+```
 
-The app listens on http://localhost:3000 (or custom PORT).
-Test the root endpoint:
-curl http://localhost:3000/
+The server will start on `http://localhost:3000` by default. You can test the root endpoint with a `GET` request to `/`, which should return "Hello World!".
 
-Response: "Hello World!"
+## Error Handling
 
-API Endpoints
-All endpoints are under http://localhost:3000/. Use tools like Postman or curl for testing.
-Date Module
+The application includes robust error handling:
 
-GET /date
+- **404 Not Found**: Thrown when data for a specific date is not available on the NSE servers.
+- **ValidationPipe**: Ensures that all API inputs conform to the expected format.
+- **Logging**: The NestJS Logger is used to provide detailed logs for tracking and debugging.
 
-Description: Get the current date in YYYY-MM-DD format.
-Response: string (e.g., "2025-09-29")
+## Future Enhancements
 
-GET /date/details
+- **Database Integration**: Implement a database (e.g., PostgreSQL) to store and manage parsed data for more complex querying and historical analysis.
+- **Automated Daily Downloads**: Add a scheduler (e.g., using a cron job) to automate the daily data fetching process.
+- **Expanded Analytics**: Introduce more advanced analytics, such as trend analysis, moving averages, and volatility calculations.
+- **Authentication**: Secure the API endpoints with an authentication layer to control access.
 
-Description: Get current date details.
-Response: JSON { date: "YYYY-MM-DD", dayOfWeek: "Monday" }
+## Contributing
 
-NSE Module
+Contributions are welcome! If you would like to contribute to the project, please follow these steps:
 
-POST /nse/download
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Submit a pull request with a clear description of your changes.
 
-Description: Download CSVs for specified dates (ddmmyyyy). Skips unavailable dates. Also downloads Nifty 50 list once.
-Body: JSON { "dates": ["ddmmyyyy", "ddmmyyyy"] } (array of strings, validated for 8-digit format)
-Response: Array of saved file paths (e.g., ["/Users/user/Desktop/NSE-Data/stocks/29092025.csv", ...])
-Notes: Creates folders if needed. Updates last successful date.
+## License
 
-GET /nse/last-date
-
-Description: Get the last successfully downloaded date (ddmmyyyy).
-Response: string or null
-
-Performance Module
-
-GET /performance/top-gainers-losers
-
-Description: Get top 5 Nifty 50 gainers and losers.
-Query Params: date (optional, ddmmyyyy; defaults to latest available file)
-Response: JSON { topGainers: [{ symbol: "ABC", percentage: 5.2 }, ...], topLosers: [...] }
-Notes: Parses the latest (or specified) MA CSV. Throws 404 if file not found.
-
-Volume Module
-
-POST /volume/differences
-
-Description: Calculate volume ratios for Nifty 50 stocks between two dates.
-Body: JSON { "dates": ["prev_ddmmyyyy", "latest_ddmmyyyy"] }
-Response: Array of { symbol: "ABC", difference: "1.50" } (sorted by symbol)
-Notes: Requires exactly two dates. Uses stock CSVs and Nifty list. Throws error if files missing.
-
-Data Storage and Management
-
-Folders Created:
-
-~/Desktop/NSE-Data/stocks/: Daily stock bhavdata CSVs.
-~/Desktop/NSE-Data/indices/: Daily indices closing CSVs.
-~/Desktop/NSE-Data/ma/: Daily market activity CSVs.
-~/Desktop/NSE-Data/broad/: Nifty 50 list CSV (static).
-
-File Naming: ${date}.csv for date-specific files; nifty50list.csv for broad.
-Parsing Logic:
-
-Performance: Scans MA CSV for "Top Five Nifty 50 Gainers/Losers" sections, extracts symbol and % change.
-Volume: Parses stock CSVs for EQ series TTL_SHARES, filters to Nifty 50, computes latest/prev ratio.
-
-Date Format: All dates in ddmmyyyy (e.g., 29092025). Internal parsing converts to Date objects.
-
-Error Handling and Logging
-
-Common Errors:
-
-404 from NSE: Logged as warning, date skipped.
-File not found: Throws NotFoundException or Error.
-Invalid input: ValidationPipe enforces date format.
-
-Logging: Uses NestJS Logger in services for info, warnings, errors.
-
-Dependencies
-
-@nestjs/common, @nestjs/core, @nestjs/typeorm
-typeorm, pg (for PostgreSQL)
-axios (for HTTP downloads)
-class-validator, class-transformer (for DTO validation)
-fs, path, os (Node.js built-ins)
-Dev: @nestjs/cli, typescript, etc.
-
-Full list in package.json.
-Testing
-
-Unit tests: Add with Jest (configured in NestJS).
-E2E tests: Use Supertest for API endpoints.
-Manual: Download data, then query analysis endpoints.
-
-Example test flow:
-
-POST /nse/download with dates.
-GET /performance/top-gainers-losers.
-POST /volume/differences with two dates.
-
-Contributing
-
-Fork the repo.
-Create feature branches.
-Submit PRs with clear descriptions.
-Follow code style (Prettier/ESLint if configured).
-
-License
-MIT License. See LICENSE file (add one if missing).
-Troubleshooting
-
-Folder Creation Issues: Ensure write permissions on desktop.
-DB Connection Fail: Check Postgres running, creds match.
-Download Fails: Verify internet; NSE may block IPs or change URLs.
-Date Format Errors: Use exactly ddmmyyyy; validation will catch.
-No Data Files: Run downloads first before analysis.
-Axios Errors: Handle network issues in code.
-
-Future Enhancements
-
-Integrate database: Store parsed data in entities for querying.
-Scheduler: Auto-download daily via cron.
-More Analytics: Add charts, trends, or ML predictions.
-Authentication: Secure endpoints.
-Frontend: Build a UI for visualization.
-Error Notifications: Email/Slack on failures.
-Broader Indices: Support beyond Nifty 50.
-Cloud Deployment: AWS/GCP for scalability.
+This project is licensed under the MIT License.

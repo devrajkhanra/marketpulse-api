@@ -57,27 +57,40 @@ export class NseService {
     async downloadAllCSVs(dates: string[]): Promise<string[]> {
         this.ensureFolders();
         const saved: string[] = [];
-        let latestSuccessfulDate: string | null = null;
+        const successfulDates: string[] = [];
 
-        // Sort dates ascending to determine the latest successful one (assuming ddmmyyyy format sortable as string)
-        const sortedDates = [...dates].sort();
+        // A queue of dates to process, sorted chronologically
+        const datesQueue = [...dates].sort();
 
-        for (const date of sortedDates) {
-            try {
-                // Attempt to download all three date-specific files
-                // If any fails (e.g., 404 on holiday), the whole date is skipped
-                const files = await Promise.all([
-                    this.download(this.urls.stocks(date), 'stocks', `${date}.csv`),
-                    this.download(this.urls.indices(date), 'indices', `${date}.csv`),
-                    this.download(this.urls.ma(date), 'ma', `${date}.csv`),
-                ]);
-                saved.push(...files);
-                latestSuccessfulDate = date; // Update latest on success
-            } catch (error) {
-                this.logger.log(`Skipping date ${date} due to unavailable data (likely holiday or invalid date).`);
-                // Continue to next date without adding to saved
+        // Number of concurrent downloads
+        const concurrencyLimit = 5;
+
+        // Worker function that picks dates from the queue and downloads files
+        const worker = async () => {
+            while (datesQueue.length > 0) {
+                // Get the next date from the queue
+                const date = datesQueue.shift();
+                if (!date) continue;
+
+                try {
+                    // Attempt to download all three date-specific files
+                    const files = await Promise.all([
+                        this.download(this.urls.stocks(date), 'stocks', `${date}.csv`),
+                        this.download(this.urls.indices(date), 'indices', `${date}.csv`),
+                        this.download(this.urls.ma(date), 'ma', `${date}.csv`),
+                    ]);
+                    saved.push(...files);
+                    successfulDates.push(date); // Record successful download
+                } catch (error) {
+                    this.logger.log(`Skipping date ${date} due to unavailable data (likely holiday or invalid date).`);
+                    // Continue to next date without adding to saved
+                }
             }
-        }
+        };
+
+        // Create and start the workers
+        const workers = Array(concurrencyLimit).fill(null).map(worker);
+        await Promise.all(workers);
 
         // Download broad once, outside the loop (it's date-independent)
         try {
@@ -88,8 +101,12 @@ export class NseService {
         }
 
         // Save the latest successful date if any were processed successfully
-        if (latestSuccessfulDate) {
-            saveLastDate(latestSuccessfulDate);
+        if (successfulDates.length > 0) {
+            // Sort to find the latest date among all successful downloads
+            const latestSuccessfulDate = successfulDates.sort().pop();
+            if (latestSuccessfulDate) {
+                saveLastDate(latestSuccessfulDate);
+            }
         }
 
         return saved;
