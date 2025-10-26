@@ -9,7 +9,8 @@ import { saveLastDate } from './utils/date-store';
 @Injectable()
 export class NseService {
     private readonly logger = new Logger(NseService.name);
-    private desktopPath = path.join(os.homedir(), 'Desktop', 'NSE-Data');
+    // Use a project-local directory for storing data
+    private dataPath = path.join(process.cwd(), '.data', 'NSE-Data');
     private folders = ['stocks', 'indices', 'ma', 'broad'];
 
     private urls = {
@@ -26,15 +27,21 @@ export class NseService {
     };
 
     private ensureFolders(): void {
-        if (!fs.existsSync(this.desktopPath)) fs.mkdirSync(this.desktopPath);
+        // Create the .data directory if it doesn't exist
+        const dataDir = path.join(process.cwd(), '.data');
+        if (!fs.existsSync(dataDir)) {
+            fs.mkdirSync(dataDir);
+        }
+
+        if (!fs.existsSync(this.dataPath)) fs.mkdirSync(this.dataPath);
         this.folders.forEach(folder => {
-            const fullPath = path.join(this.desktopPath, folder);
+            const fullPath = path.join(this.dataPath, folder);
             if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath);
         });
     }
 
     private async download(url: string, folder: string, filename: string): Promise<string> {
-        const filePath = path.join(this.desktopPath, folder, filename);
+        const filePath = path.join(this.dataPath, folder, filename);
         try {
             const response = await axios.get(url, { responseType: 'stream' });
             return new Promise((resolve, reject) => {

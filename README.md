@@ -5,7 +5,7 @@
 
 MarketPulse is a robust backend application built with NestJS, designed to fetch, store, and analyze daily data from the National Stock Exchange of India (NSE). It automates the process of downloading daily CSV files, including stock bhavdata, indices closing data, and market activity reports. The application processes this data to provide valuable insights, such as identifying the top-performing sectors, top Nifty 50 gainers and losers, and volume analysis for both individual stocks and entire market sectors.
 
-The application is structured to be modular and scalable, with dedicated modules for handling date utilities, NSE data fetching, stock-specific analysis, and sector-specific metrics. It uses a file-based storage system, organizing downloaded data into a structured directory on the user's desktop. This makes it an ideal tool for developers, traders, and financial analysts who require automated access to NSE data and insightful market analytics.
+The application is structured to be modular and scalable, with dedicated modules for handling date utilities, NSE data fetching, stock-specific analysis, and sector-specific metrics. It uses a file-based storage system, organizing downloaded data into a structured directory within the project. This makes it an ideal tool for developers, traders, and financial analysts who require automated access to NSE data and insightful market analytics.
 
 ## Key Features
 
@@ -15,7 +15,8 @@ The application is structured to be modular and scalable, with dedicated modules
 - **Nifty 50 Stock Performance**: Extracts the top 5 gainers and losers from the Nifty 50 index based on daily market reports.
 - **Nifty 50 Stock Volume Analysis**: Calculates volume differences for individual Nifty 50 stocks between two dates.
 - **Date Management**: Keeps track of the last successfully downloaded date to ensure data consistency.
-- **CORS Enabled**: Allows cross-origin requests for easy integration with frontend applications.
+- **Secure CORS**: Implements a whitelist-based CORS policy for secure cross-origin requests.
+- **Containerized**: Includes a Dockerfile for easy containerization and deployment.
 - **Modular Architecture**: A clean, modular structure that separates concerns, making the application easy to maintain and extend.
 
 ## Tech Stack
@@ -25,6 +26,7 @@ The application is structured to be modular and scalable, with dedicated modules
 - **HTTP Client**: Axios (for fetching data from NSE)
 - **Data Parsing**: csv-parser
 - **Validation**: class-validator, class-transformer
+- **Containerization**: Docker
 
 ## System Architecture
 
@@ -32,17 +34,20 @@ The application follows a modular architecture, with each module responsible for
 
 - **AppModule**: The root module that integrates all other modules.
 - **DateModule**: Provides utility functions for handling dates.
-- **NseModule**: Manages the downloading of CSV files from the NSE.
+- **NseModule**: Manages the downloading of CSV files from the NSE. It now stores the data in a local `.data` directory.
 - **SectorsModule**: Responsible for all sector-specific analysis, including performance and volume ratios.
 - **StocksModule**: Handles all stock-specific analysis, including performance and volume for Nifty 50 stocks.
 
 ## Prerequisites
 
-- Node.js (v16+ recommended)
+- Node.js (v18+ recommended)
 - npm or yarn
+- Docker (optional, for containerized deployment)
 - Internet access to download data from the NSE website.
 
 ## Installation and Setup
+
+### Local Development
 
 1. **Clone the repository**:
    ```bash
@@ -58,6 +63,19 @@ The application follows a modular architecture, with each module responsible for
 3. **Run the application**:
    ```bash
    npm run start:dev
+   ```
+   The application will be available at `http://localhost:3000`.
+
+### Docker
+
+1. **Build the Docker image**:
+   ```bash
+   docker build -t marketpulse .
+   ```
+
+2. **Run the Docker container**:
+   ```bash
+   docker run -p 3000:3000 marketpulse
    ```
    The application will be available at `http://localhost:3000`.
 
@@ -102,22 +120,17 @@ The application follows a modular architecture, with each module responsible for
 
 ## Data Storage
 
-- **File-Based Storage**: The application stores downloaded CSV files on the user's desktop in a structured folder format:
-  - `~/Desktop/NSE-Data/indices/`: For index data.
-  - `~/Desktop/NSE-Data/ma/`: For market activity reports.
-  - `~/Desktop/NSE-Data/stocks/`: For stock bhavdata.
+- **File-Based Storage**: The application stores downloaded CSV files in a `.data` directory within the project's root. The structure is as follows:
+  - `.data/NSE-Data/indices/`: For index data.
+  - `.data/NSE-Data/ma/`: For market activity reports.
+  - `.data/NSE-Data/stocks/`: For stock bhavdata.
 
 - **Date Tracking**: The last successfully downloaded date is stored in a JSON file to maintain data consistency.
 
-## Running the Application
+## Security
 
-To run the application in development mode with hot-reloading:
-
-```bash
-npm run start:dev
-```
-
-The server will start on `http://localhost:3000` by default. You can test the root endpoint with a `GET` request to `/`, which should return "Hello World!".
+- **CORS**: The application uses a whitelist-based CORS policy to restrict cross-origin requests to a set of trusted domains. The allowed origins can be configured in `src/main.ts`.
+- **Validation**: Incoming data is validated using `class-validator` and `class-transformer` to prevent malicious or malformed data from being processed.
 
 ## Error Handling
 
@@ -126,6 +139,16 @@ The application includes robust error handling:
 - **404 Not Found**: Thrown when data for a specific date is not available on the NSE servers.
 - **ValidationPipe**: Ensures that all API inputs conform to the expected format.
 - **Logging**: The NestJS Logger is used to provide detailed logs for tracking and debugging.
+
+## Deployment
+
+The application is ready to be deployed to any platform that supports Node.js or Docker.
+
+### Docker Deployment
+
+1. Build the Docker image as described in the "Installation and Setup" section.
+2. Push the image to a container registry (e.g., Docker Hub, Google Container Registry).
+3. Deploy the image to your chosen platform (e.g., Google Cloud Run, AWS Fargate).
 
 ## Future Enhancements
 
