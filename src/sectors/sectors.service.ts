@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import * as csv from 'csv-parser';
+import csv from 'csv-parser';
 import { GetSectorPerformanceResponseDto, GetSectorVolumeRatioResponseDto } from './dto/sectors.dto';
 
 @Injectable()
