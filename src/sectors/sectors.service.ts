@@ -84,7 +84,7 @@ export class SectorsService {
                         .filter(row => this.majorSectors.includes(row['Index Name']))
                         .map(row => ({
                             sector: row['Index Name'],
-                            percentageChange: parseFloat(row['Percentage Change']),
+                            percentageChange: parseFloat(row['Change(%)']),
                         }));
                     resolve(sectorsData);
                 })
