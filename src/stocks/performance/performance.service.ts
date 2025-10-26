@@ -7,7 +7,8 @@ import * as os from 'os';
 @Injectable()
 export class PerformanceService {
     private readonly logger = new Logger(PerformanceService.name);
-    private desktopPath = path.join(os.homedir(), 'Desktop', 'NSE-Data', 'ma');
+    private dataPath = path.join(process.cwd(), '.data', 'NSE-Data');
+    private desktopPath = path.join(this.dataPath, 'ma');
 
     private parseDate(dateStr: string): Date {
         const day = parseInt(dateStr.slice(0, 2));

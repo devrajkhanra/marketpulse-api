@@ -7,7 +7,8 @@ import { GetSectorPerformanceResponseDto, GetSectorVolumeRatioResponseDto } from
 
 @Injectable()
 export class SectorsService {
-    private readonly indicesFilePath = path.join(os.homedir(), 'Desktop', 'NSE-Data', 'indices');
+    private dataPath = path.join(process.cwd(), '.data', 'NSE-Data');
+    private readonly indicesFilePath = path.join(this.dataPath, 'indices');
 
     private readonly majorSectors = [
         'Nifty Auto',

@@ -11,8 +11,8 @@ export class VolumeService {
         }
 
         const [prevDate, latestDate] = dates;
-        const homeDir = os.homedir();
-        const basePath = path.join(homeDir, 'Desktop', 'NSE-Data', 'stocks');
+        const dataPath = path.join(process.cwd(), '.data', 'NSE-Data');
+        const basePath = path.join(dataPath, 'stocks');
         const prevPath = path.join(basePath, `${prevDate}.csv`);
         const latestPath = path.join(basePath, `${latestDate}.csv`);
 
@@ -63,8 +63,8 @@ export class VolumeService {
     }
 
     private getNiftySymbols(): Set<string> {
-        const homeDir = os.homedir();
-        const niftyPath = path.join(homeDir, 'Desktop', 'NSE-Data', 'broad', 'nifty50list.csv');
+        const dataPath = path.join(process.cwd(), '.data', 'NSE-Data');
+        const niftyPath = path.join(dataPath, 'broad', 'nifty50list.csv');
         let content: string;
         try {
             content = fs.readFileSync(niftyPath, 'utf-8');
