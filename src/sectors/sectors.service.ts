@@ -67,6 +67,7 @@ export class SectorsService {
         const volumeRatios = this.calculateVolumeRatio(currentSectorsVolume, previousSectorsVolume);
         const sortedVolumeRatios = this.sortSectorsByVolumeRatio(volumeRatios);
 
+        console.log(sortedVolumeRatios);
         return {
             topVolumeGainers: sortedVolumeRatios.slice(0, 5),
             topVolumeLosers: sortedVolumeRatios.slice(-5).reverse(),
@@ -103,7 +104,7 @@ export class SectorsService {
                         .filter(row => this.majorSectors.includes(row['Index Name']))
                         .map(row => ({
                             sector: row['Index Name'],
-                            volume: parseFloat(row['Traded Volume (in Lakhs)']),
+                            volume: parseInt(row['Volume']),
                         }));
                     resolve(sectorsData);
                 })
